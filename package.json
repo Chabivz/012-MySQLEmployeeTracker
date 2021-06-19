@@ -1,0 +1,26 @@
+{
+  "name": "012-mysqlemployeetracker",
+  "version": "1.0.0",
+  "description": "(About the Homework.)",
+  "main": "random.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chabivz/012-MySQLEmployeeTracker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Chabivz/012-MySQLEmployeeTracker/issues"
+  },
+  "homepage": "https://github.com/Chabivz/012-MySQLEmployeeTracker#readme",
+  "dependencies": {
+    "console.table": "^0.10.0",
+    "inquirer": "^8.1.1",
+    "mysql": "^2.18.1"
+  }
+}
