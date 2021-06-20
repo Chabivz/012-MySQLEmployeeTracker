@@ -75,16 +75,20 @@ const xRoad = () => {
                     return updateEmployee();
                 case 'Update Employee Role':
                     return updateEmployeeRole();
+                case 'Update Employee Department':
+                    return updateEmployeeDepartment();
                 case 'Update Employee Manager':
                     return updateEmployeeManager();
                 case 'Remove Employee':
-                return removeEmployee();
-                    case 'Remove Role':
-                return removeRole();
-                    case 'Exit':
-                return closeConnection();
+                    return removeEmployee();
+                case 'Remove Role':
+                    return removeRole();
+                case 'Remove Department':
+                    return removeDepartment();
+                case 'Exit':
+                    return closeConnection();
                 default:
-                return xRoad();
+                    return xRoad();
               }
         }) 
 }
@@ -93,8 +97,11 @@ const closeConnection = () => {
     connection.end();
 }
 
+
+// ------------------------- VIEW -------------------------
+
 const viewAllEmp = () => {
-    connection.query("SELECT * FROM employee", (err, result) => {
+    connection.query("SELECT * FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE first_name IS NOT NULL", (err, result) => {
         if(err) throw err;
         console.table(result);
         xRoad()
@@ -133,3 +140,154 @@ const viewAllByBudgetSalary = () => {
         xRoad()
     })   
 }
+
+// ------------------------- DELETE -------------------------
+
+const removeEmployee = () => {
+    connection.query('SELECT * FROM employee', (err, results) => {
+    inquirer.prompt([
+        {
+            name: "choice",
+            type: "rawlist",
+            choices() {
+                const choiceArray = [];
+                results.forEach(({id, first_name, last_name}) => {
+                    choiceArray.push(`${id} ${first_name} ${last_name}`);
+                });
+                return choiceArray;
+            },
+            message: "Choose employee would you like to delete.",
+        }
+    ])
+    .then((answer) => {
+        // Deconstructing the anwer
+        let { choice } = answer;
+        // Grabbing the first string using Regular Expression.
+        const empId = choice.replace(/ .*/,'');
+        connection.query('DELETE FROM employee WHERE ?', {
+            id: empId
+        },
+        (err, result) => {
+            if (err) throw err;
+            console.log(`Employee ${choice} deleted in the database.\n`);
+            xRoad(); 
+        }
+        );
+    })
+    })
+};
+
+const removeRole = () => {
+
+    connection.query('SELECT * FROM role', (err, results) => {
+        inquirer.prompt([
+            {
+                name: "choice",
+                type: "rawlist",
+                choices() {
+                    const choiceArray = [];
+                    results.forEach(({title}) => {
+                        choiceArray.push(title);
+                    });
+                    return choiceArray;
+                },
+                message: "Choose role would you like to delete.",
+            }
+        ])
+        .then((answer) => {
+            let { choice } = answer;
+            
+            connection.query('DELETE FROM role WHERE ?', {
+                title: choice
+            },
+            (err, result) => {
+                if (err) throw err;
+                console.log(`Role ${choice} deleted in the database.\n`);
+                xRoad(); 
+            }
+            );
+        })
+        }  
+    )
+}
+
+const removeDepartment = () => {
+    connection.query('SELECT * FROM department', (err, results) => {
+        inquirer.prompt([
+            {
+                name: "choice",
+                type: "rawlist",
+                choices() {
+                    const choiceArray = [];
+                    results.forEach(({name}) => {
+                        choiceArray.push(name);
+                    });
+                    return choiceArray;
+                },
+                message: "Choose department would you like to delete. ",
+            }
+        ])
+        .then((answer) => {
+            let { choice } = answer;
+            
+            connection.query('DELETE FROM department WHERE ?', {
+                name: choice
+            },
+            (err, result) => {
+                if (err) throw err;
+                console.log(`Deparment ${choice} deleted in the database.\n`);
+                xRoad(); 
+            }
+            );
+        })
+        }  
+    )
+
+}
+
+// ------------------------- ADD -------------------------
+
+const addEmp = () => {
+    inquirer.prompt([
+        {
+            name: "first_name",
+            type: "input",
+            message: "New employee first name? ",
+        },
+        {
+            name: "first_name",
+            type: "input",
+            message: "New employee first name? ",
+        },
+        
+    ])
+
+}
+
+const addRole = () => {
+
+}
+
+const addDepartment = () => {
+
+
+}
+
+// ------------------------- Update -------------------------
+
+const updateEmployeeDepartment = () => {
+
+}
+
+const updateEmployee = () => {
+
+}
+
+const updateEmployeeManager = () => {
+
+}
+
+const updateEmployeeRole = () => {
+
+} 
+
