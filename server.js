@@ -17,7 +17,7 @@ connection.connect((err) => {
   ____ ____ ____ ____ ____ ____ ____ ____ 
  ||E |||m |||p |||l |||o |||y |||e |||e ||
  ||__|||__|||__|||__|||__|||__|||__|||__||
- |/__\||/__\||/__\||/__\||/__\||/__\||/__\|||/__\||                                                   
+ |/__\||/__\||/__\||/__\||/__\||/__\||/__\||/__\||                                                   
   ____ ____ ____ ____ ____ ____ ____      
  ||M |||a |||n |||a |||g |||e |||r ||     
  ||__|||__|||__|||__|||__|||__|||__||     
@@ -42,9 +42,7 @@ const xRoad = () => {
             { title: 'Add Employee', value: 'Add Employee' },
             { title: 'Add Role', value: 'Add Role' },
             { title: 'Add Department', value: 'Add Department' },
-            { title: 'Update Employee', value: 'Update Employee' },
             { title: 'Update Employee Role', value: 'Update Employee Role' },
-            { title: 'Update Employee Manager', value: 'Update Employee Manager' },
             { title: 'Remove Employee', value: 'Remove Employee' },
             { title: 'Remove Department', value: 'Remove Department' },
             { title: 'Remove Role', value: 'Remove Role' },
@@ -62,7 +60,7 @@ const xRoad = () => {
                 case 'View All Roles':
                   return viewAllRole();
                 case 'View All Employees By Manager':
-                    return viewAllByManager();
+                    return viewEmpByManager();
                 case 'View the total utilized budget of a department':
                     return viewAllByBudgetSalary();
                 case 'Add Employee':
@@ -71,14 +69,8 @@ const xRoad = () => {
                     return addRole();
                 case 'Add Department':
                     return addDepartment();
-                case 'Update Employee':
-                    return updateEmployee();
                 case 'Update Employee Role':
                     return updateEmployeeRole();
-                case 'Update Employee Department':
-                    return updateEmployeeDepartment();
-                case 'Update Employee Manager':
-                    return updateEmployeeManager();
                 case 'Remove Employee':
                     return removeEmployee();
                 case 'Remove Role':
@@ -124,11 +116,40 @@ const viewAllRole = () => {
     })   
 }
 // Need to only select IS 'manager_id' NOT NULL
-const viewAllByManager = () => {
-    connection.query("SELECT first_name, last_name, role_id, manager_id FROM employee WHERE 'manager_id' IS NOT NULL", (err, result) => {
+const viewEmpByManager = () => {
+    connection.query("SELECT * FROM employee", (err, manager) => {
         if(err) throw err;
-        console.table(result);
-        xRoad()
+        inquirer.prompt([
+            {
+                name: "manager",
+                type: "rawlist",
+                message: "Select team by manager you wanted to view.\n",
+                choices() {
+                    const managersArray = [];
+                    manager.forEach(( { id, first_name, last_name, role_id, manager_id }) => {
+                        if (manager_id === null) {
+                            // console.log(`${id} ${first_name} ${last_name} ${manager_id}`);
+                            managersArray.push(`${id} ${first_name} ${last_name}`)
+                        }
+                    }); return managersArray;
+                }
+            }
+        ])
+        .then((data) => {
+            const managerData = data.manager;
+            // Grabbing the first string using Regular Expression.
+            const RolesId = managerData.replace(/ .*/,'');
+            console.log(RolesId);
+            connection.query('SELECT * FROM employee WHERE ?', {
+                manager_id: RolesId
+            },
+            (err, result) => {
+                if (err) throw err;
+                console.table(result);
+                xRoad(); 
+            }
+            );
+        })
     })   
 }
 
@@ -248,46 +269,245 @@ const removeDepartment = () => {
 // ------------------------- ADD -------------------------
 
 const addEmp = () => {
+    connection.query('SELECT * FROM employee', (err, manager) => { 
+        if (err) throw err;
+    connection.query('SELECT * FROM role ', (err, roles) => {
+        if (err) throw err;
     inquirer.prompt([
         {
-            name: "first_name",
+            name: "firstName",
             type: "input",
-            message: "New employee first name? ",
+            message: "New employee's first name? ",
         },
         {
-            name: "first_name",
+            name: "lastName",
             type: "input",
-            message: "New employee first name? ",
+            message: "New employee's last name? ",
         },
-        
+        {
+            name: "role_title",
+            type: "rawlist",
+            message: "New employee's role? ",
+            choices() {
+                const roleArray = [];
+                roles.forEach(({ id, title })=> {
+                    roleArray.push(`${id} ${title}`)
+                });
+                return roleArray;
+            },
+        },
+        {
+            name: "manager_name",
+            type: "rawlist",
+            message: "New employee's manager? ",
+            choices() {
+                const managerArray = [];
+                manager.forEach(({ id, first_name, last_name })=> {
+                    managerArray.push(`${id} ${first_name} ${last_name}`)
+                });
+                return managerArray;
+            },
+        },
     ])
+    .then((answer) => {
+        const role = answer.role_title
+        const roleAnswer = role.replace(/ .*/,'');
+        const manager = answer.manager_name;
+        const managerAnswer = manager.replace(/ .*/,'');
+        const fname = answer.firstName;
+        const lname = answer.lastName;
 
-}
+        connection.query('INSERT INTO employee SET ?', 
+        {
+            last_name: lname,
+            first_name: fname,
+            role_id: roleAnswer || 0,
+            manager_id: managerAnswer || 0,
+        },
+        (error, res) => {
+            if (err) throw err;
+            console.log(`${fname} ${lname} has been updated to the kingdom!\n`)
+            xRoad()
+        }   
+    );
+    }) // Closing for .then, 😬
+}) // Closing for Role Connection 
+}) // Closing for Department connection
+};
 
 const addRole = () => {
+    connection.query('SELECT * FROM department', (err, kingdom) => {
+        if (err) throw err;
+    inquirer.prompt([
+        {
+            name: 'title',
+            type: 'input',
+            message: 'Role name?'
+        },
+        {
+            name: 'salary',
+            type: 'input',
+            message: 'Salary?'
+        },
+        {
+            name: 'kingdom',
+            type: 'rawlist',
+            message: 'Department name?',
+            choices() {
+                const departmentArray = [];
+                kingdom.forEach(({ id, name}) => {
+                    departmentArray.push(`${id} ${name}`) 
+                });
+            return departmentArray;
+            }
+        },
+    ])
+    .then((answer) => {
+        const dept = answer.kingdom;
+        const deptId = dept.replace(/ .*/, '');
+        connection.query('INSERT INTO role SET ?',
+        {
+            title: answer.title,
+            salary: answer.salary,
+            department_id: deptId || 0, // || 0 == if value undefined or null it will return to 0
+        },
+        (err, result) => {
+            if (err) throw err;
+            console.log(`Role ${answer.title} has been added to the role.\n`)
+            xRoad();
+        }
+        ) // INSERT CONNECTION 
 
+    })
+    }) // Select Role Connection
 }
 
 const addDepartment = () => {
-
-
+    inquirer.prompt([
+        {
+            name: 'name',
+            type: 'input',
+            message: 'Name of department',
+        },
+    ])
+    .then((answer) => {
+        connection.query('INSERT INTO department SET ?', 
+        {
+            name: answer.name,
+        },
+        (err, result) => {
+            if (err) throw err;
+            console.log(`${answer.name} is added to the depatment\n`);
+            xRoad()
+        })
+        
+    })
 }
 
 // ------------------------- Update -------------------------
 
-const updateEmployeeDepartment = () => {
-
-}
-
-const updateEmployee = () => {
-
-}
-
-const updateEmployeeManager = () => {
-
-}
 
 const updateEmployeeRole = () => {
+    connection.query('SELECT * FROM employee', (err, results) => {
+        inquirer.prompt([
+            {
+                name: "choice",
+                type: "rawlist",
+                choices() {
+                    const choiceArray = [];
+                    results.forEach(({id, first_name, last_name}) => {
+                        choiceArray.push(`${id} ${first_name} ${last_name}`);
+                    });
+                    return choiceArray;
+                },
+                message: "Choose employee would you like to update the role.",
+            }
+        ])
+        .then((answer) => {
+            // Deconstructing the anwer
+            let { choice } = answer;
+            // Grabbing the first string using Regular Expression.
+            const empId = choice.replace(/ .*/,'');
+            // console.log(empId)
+            connection.query('SELECT * FROM employee', (err, manager) => { 
+                if (err) throw err;
+            connection.query('SELECT * FROM role ', (err, roles) => {
+                if (err) throw err;
+                inquirer.prompt([
+                {
+                    name: "role_title",
+                    type: "rawlist",
+                    message: "New employee's role? ",
+                    choices() {
+                        const roleArray = [];
+                        roles.forEach(({ id, title })=> {
+                            roleArray.push(`${id} ${title}`)
+                        });
+                        return roleArray;
+                    },
+                
+                },
+            ])
+            .then((answer) => {
+                const role = answer.role_title
+                const roleAnswer = role.replace(/ .*/,'');
+                console.log(answer)
+                console.log(roleAnswer)
+                console.log(empId)
 
-} 
 
+                connection.query(
+                    "UPDATE employee SET role_id = ? WHERE id = ?",
+                    [   
+                        roleAnswer, empId 
+                    ],
+                    (error) => {
+                      if (error) throw error;
+                      console.log("Success!");
+                      xRoad();
+                    }
+                  );
+
+            }) // Closing for .then, 😬
+        }) // Closing for Role Connection 
+        }) // Closing for Department connection
+        })
+
+        })
+
+}
+
+// Need to update manager stuff.
+const updateEmployeeManager = () => {
+    connection.query('SELECT * FROM employee', (err, results) => {
+        inquirer.prompt([
+            {
+                name: "choice",
+                type: "rawlist",
+                choices() {
+                    const choiceArray = [];
+                    results.forEach(({id, first_name, last_name}) => {
+                        choiceArray.push(`${id} ${first_name} ${last_name}`);
+                    });
+                    return choiceArray;
+                },
+                message: "Choose employee would you like to delete.",
+            }
+        ])
+        .then((answer) => {
+            // Deconstructing the anwer
+            let { choice } = answer;
+            // Grabbing the first string using Regular Expression.
+            const empId = choice.replace(/ .*/,'');
+            connection.query('DELETE FROM employee WHERE ?', {
+                id: empId
+            },
+            (err, result) => {
+                if (err) throw err;
+                console.log(`Employee ${choice} deleted in the database.\n`);
+                xRoad(); 
+            }
+            );
+        })
+        })
+}
