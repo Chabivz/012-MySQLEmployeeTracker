@@ -139,7 +139,6 @@ const viewEmpByManager = () => {
             const managerData = data.manager;
             // Grabbing the first string using Regular Expression.
             const RolesId = managerData.replace(/ .*/,'');
-            console.log(RolesId);
             connection.query('SELECT * FROM employee WHERE ?', {
                 manager_id: RolesId
             },
@@ -155,7 +154,11 @@ const viewEmpByManager = () => {
 
 // Need to join Department ID
 const viewAllByBudgetSalary = () => {
-    connection.query("SELECT department_id, SUM(salary) as totalSum FROM role GROUP BY department_id", (err, result) => {
+    // SELECT * FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE first_name IS NOT NULL
+
+    // RIGHT JOIN department ON role.department_id = department.id
+    
+    connection.query("SELECT department_id, SUM(salary) salary, department.name FROM role LEFT JOIN department ON role.department_id = department.id GROUP BY department_id", (err, result) => {
         if(err) throw err;
         console.table(result);
         xRoad()
@@ -451,11 +454,6 @@ const updateEmployeeRole = () => {
             .then((answer) => {
                 const role = answer.role_title
                 const roleAnswer = role.replace(/ .*/,'');
-                console.log(answer)
-                console.log(roleAnswer)
-                console.log(empId)
-
-
                 connection.query(
                     "UPDATE employee SET role_id = ? WHERE id = ?",
                     [   

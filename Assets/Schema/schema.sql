@@ -6,7 +6,7 @@ USE CMS;
 
 CREATE TABLE department (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(30)
+    name VARCHAR(50)
 );
 
 CREATE TABLE role (
